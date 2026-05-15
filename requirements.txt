@@ -1,12 +1,11 @@
-rich == 15.0.0
-ipykernel == 7.2.0
-pandas == 3.0.2
-numpy == 2.4.4
-pillow == 12.2.0
-matplotlib == 3.10.9
-accelerate  == 1.13.0
-qwen-vl-utils == 0.0.14
---extra-index-url pytorch.org
+rich
+ipykernel
+pandas
+numpy
+pillow
+matplotlib
+accelerate
 torch
 torchvision
 transformers
+qwen-vl-utils
