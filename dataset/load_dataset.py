@@ -6,9 +6,9 @@ from src.utils.logger import setup_logger
 
 
 class SROIEDataset:
-    def __init__(self, dataset_dir: Path, debug: Optional[bool] = False, manifest: Optional[List] = ['train', 'eval', 'test']):
-        self.dataset_dir = dataset_dir
-        self.manifest = manifest
+    def __init__(self, dataset_dir: Path, debug: Optional[bool] = False, manifest: Optional[List[str]] = None):
+        self.dataset_dir = Path(dataset_dir)
+        self.manifest = manifest or ['train', 'eval', 'test']
         self.logger = setup_logger(self.__class__.__name__, debug=debug)
 
         # populate the dataset with proper splits
@@ -17,7 +17,7 @@ class SROIEDataset:
         # self.test = None
         self.load_dataset()
 
-    def _validate_files_count(self, path: str, split: str):
+    def _validate_files_count(self, path: Path, split: str):
         img_dir = path / "img"
         box_dir = path / "box"
         ent_dir = path / "entities"
@@ -65,13 +65,11 @@ class SROIEDataset:
         return data
 
     def load_dataset(self):
-        # load the dataset from each split and then format in pandas format
-        self.train = self._load_split(split="train")
-        self.eval = self._load_split(split="eval")
-        self.test = self._load_split(split="test")
+        # load the dataset from each split in the manifest and then format in pandas format
+        for split in self.manifest:
+            setattr(self, split, self._load_split(split=split))
 
 
 # DATASET_DIR = Path("/Users/lua/.cache/kagglehub/datasets/dattrinh12/sroie-dataset")
 # data_splits_path = DATASET_DIR / "versions/1"
 # sroie_dataset = SROIEDataset(dataset_dir=data_splits_path, debug=True)
-# #sroie_dataset.load_dataset()
