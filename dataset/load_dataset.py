@@ -1,14 +1,17 @@
 import pandas as pd
 import numpy as np
 import kagglehub
+from PIL import Image
 from pathlib import Path
 from typing import Optional, List, Union
 from src.utils.logger import setup_logger
 
 
 class SROIEDataset:
-    def __init__(self, dataset_dir: Union[Path, str] = None, debug: Optional[bool] = False, manifest: Optional[List[str]] = None):
+    def __init__(self, dataset_dir: Union[Path, str] = None, debug: Optional[bool] = False, manifest: Optional[List[str]] = None, resize_offline: Optional[bool] = False, max_edge: Optional[int] = 1024):
         self.manifest = manifest or ['train', 'eval', 'test']
+        self.resize_offline = resize_offline
+        self.max_edge = max_edge
         self.logger = setup_logger(self.__class__.__name__, debug=debug)
         if dataset_dir is None:
             self.logger.info("No dataset_dir provided. Sourcing from Kaggle...")
@@ -32,6 +35,21 @@ class SROIEDataset:
         except Exception as e:
             self.logger.error(f"Failed to fetch dataset from Kaggle. Ensure kagglehub is authenticated: {e}")
             raise
+
+    @staticmethod
+    def resize_and_save_image(original_path: Path, resized_dir: Path, img_name: str, max_edge:int) -> Path:
+        """ Handles the actual offline resizing and saving of a single image, returning the path to the resized image. """
+        resized_dir.mkdir(parents=True, exist_ok=True)
+        resized_path = resized_dir / f"{img_name}.jpg"
+        # skip if already resized from a previous run
+        if resized_path.exists():
+            return resized_path
+    
+        with Image.open(original_path) as img:
+            img = img.convert("RGB")
+            img.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
+            img.save(resized_path, format="JPEG", quality=85)
+        return resized_path
 
     def _validate_files_count(self, path: Path, split: str):
         img_dir = path / "img"
@@ -67,17 +85,26 @@ class SROIEDataset:
         if len(valid_img_files) == 0:
             self.logger.warning(f"No valid samples found for split {split}")
             return None
+        #NOTE: create resized image dir, these images directory is just for training, if you want to inspect orginal iamges with boxes, this will be taken from original img path, not resized path
+        resized_dir = full_path / "img_resized"
         rows = []
         for img in valid_img_files:
+            original_img_path = full_path / "img" / f"{img}.jpg"
             box_path = full_path / "box" / f"{img}.txt"
             ent_path = full_path / "entities" / f"{img}.txt"
+            if self.resize_offline:
+                final_img_path = self.resize_and_save_image(original_img_path, resized_dir, img, self.max_edge)
+            else:
+                final_img_path = original_img_path
             rows.append({
                 "doc_id": img,
-                "img_path": str(full_path / "img" / f"{img}.jpg"),
+                "img_path": str(final_img_path),
                 "box_path": str(box_path),
                 "ent_path": str(ent_path),
             })
         data = pd.DataFrame(rows)
+        # attach global metadata to the DataFrame
+        data.attrs['is_resized_offline'] = self.resize_offline
         return data
 
     def load_dataset(self):
