@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import kagglehub
+import random
 from PIL import Image
 from pathlib import Path
 from typing import Optional, List, Union
@@ -8,10 +9,11 @@ from src.utils.logger import setup_logger
 
 
 class SROIEDataset:
-    def __init__(self, dataset_dir: Union[Path, str] = None, debug: Optional[bool] = False, manifest: Optional[List[str]] = None, resize_offline: Optional[bool] = False, max_edge: Optional[int] = 1024):
+    def __init__(self, dataset_dir: Union[Path, str] = None, debug: Optional[bool] = False, manifest: Optional[List[str]] = None, resize_offline: Optional[bool] = False, max_edge: Optional[int] = 1024, seed: Optional[int] = 42):
         self.manifest = manifest or ['train', 'eval', 'test']
         self.resize_offline = resize_offline
         self.max_edge = max_edge
+        self.seed = seed
         self.logger = setup_logger(self.__class__.__name__, debug=debug)
         if dataset_dir is None:
             self.logger.info("No dataset_dir provided. Sourcing from Kaggle...")
@@ -85,10 +87,14 @@ class SROIEDataset:
         if len(valid_img_files) == 0:
             self.logger.warning(f"No valid samples found for split {split}")
             return None
+        sorted_img_files = sorted(valid_img_files)
+        if self.seed is not None:
+            rng = random.Random(self.seed)
+            rng.shuffle(sorted_img_files)
         #NOTE: create resized image dir, these images directory is just for training, if you want to inspect orginal iamges with boxes, this will be taken from original img path, not resized path
         resized_dir = full_path / "img_resized"
         rows = []
-        for img in valid_img_files:
+        for img in sorted_img_files:
             original_img_path = full_path / "img" / f"{img}.jpg"
             box_path = full_path / "box" / f"{img}.txt"
             ent_path = full_path / "entities" / f"{img}.txt"

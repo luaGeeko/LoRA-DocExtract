@@ -10,3 +10,6 @@ torchvision
 transformers
 qwen-vl-utils
 bitsandbytes
+hydra-core
+omegaconf
+peft

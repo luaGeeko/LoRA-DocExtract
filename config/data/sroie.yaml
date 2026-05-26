@@ -1,0 +1,9 @@
+# Data Generation & Ingestion
+dataset_name: "dattrinh12/sroie-dataset"
+manifest: 
+  - "train"
+  - "eval"
+  - "test"
+resize_offline: true
+max_edge: 1024
+seed: 42

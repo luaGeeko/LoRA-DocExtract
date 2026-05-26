@@ -1,0 +1,5 @@
+defaults:
+  - data: sroie
+  - model: qwen2_vl
+  - training: lora_sft
+  - _self_

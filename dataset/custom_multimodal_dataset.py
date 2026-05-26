@@ -5,6 +5,9 @@ from torch.utils.data import Dataset
 from src.utils.logger import setup_logger
 from qwen_vl_utils import process_vision_info
 
+from dataset.load_dataset import SROIEDataset
+from src.vlm_model import load_processor
+
 
 class SROIEMultimodalDataset(Dataset):
     def __init__(self, data_frame: pd.DataFrame, split: str, debug: Optional[bool] = False, max_edge: Optional[int]=1024, max_seq_length: Optional[int] = 1024, processor=None):
@@ -20,7 +23,7 @@ class SROIEMultimodalDataset(Dataset):
             self.logger.info("Preprocessing resizing has not been done. Resizing of images will happen while loading items")
 
     def __len__(self):
-        return len(self.data_frame.shape[0])
+        return self.data_frame.shape[0]
 
     def __getitem__(self, idx):
         item = self.data_frame.iloc[idx]
@@ -30,7 +33,7 @@ class SROIEMultimodalDataset(Dataset):
 
         # load the iamge
         image = Image.open(image_path).convert("RGB")
-
+        print(f"Loaded image size: {image.size}")
         # load the label in json string
         with open(entity_path, 'r', encoding='utf-8') as f:
             entities_json_str = f.read().strip()
@@ -59,9 +62,11 @@ class SROIEMultimodalDataset(Dataset):
         # lets process so we have proper input tensors for the model
         text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
         image_inputs, _ = process_vision_info(messages)
-
+        print(f"Processed image inputs shape: {image_inputs[0].size}")
+        if len(image_inputs) > 1:
+            breakpoint()
         inputs = self.processor(
-            text=[text],
+            text=text,
             images=image_inputs,
             padding="max_length",
             max_length=self.max_seq_length, 
@@ -70,5 +75,14 @@ class SROIEMultimodalDataset(Dataset):
         )
        
         inputs = {k: v.squeeze(0) for k, v in inputs.items()}
-        inputs["labels"] = inputs["input_ids"].clone()
+
+        # advanced optimization (Loss Masking), mask out the prompt tokens
+        labels = inputs["input_ids"].clone()
+        prompt_text = self.processor.apply_chat_template(messages[:1], tokenize=False, add_generation_prompt=True)
+        prompt_token_len = len(self.processor.tokenizer(prompt_text)["input_ids"])
+        # mask the prompt tokens with -100 so that they are ignored in the loss calculation, only the generation part (the label part) will contribute to the loss
+        labels[:prompt_token_len] = -100 
+        inputs["labels"] = labels
+        
         return inputs
+    

@@ -1,0 +1,7 @@
+model_id: "Qwen/Qwen2-VL-2B-Instruct"
+max_seq_length: 1024
+target_modules: 
+  - "q_proj"
+  - "v_proj"
+  - "k_proj"
+  - "o_proj"
