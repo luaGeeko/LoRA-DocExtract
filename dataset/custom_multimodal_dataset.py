@@ -34,7 +34,7 @@ class SROIEMultimodalDataset(Dataset):
 
         # load the iamge
         image = Image.open(image_path).convert("RGB")
-        print(f"Loaded image size: {image.size}")
+        #print(f"Loaded image size: {image.size}")
         # load the label in json string
         with open(entity_path, 'r', encoding='utf-8') as f:
             entities_json_str = f.read().strip()
@@ -63,7 +63,7 @@ class SROIEMultimodalDataset(Dataset):
         # lets process so we have proper input tensors for the model
         text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
         image_inputs, _ = process_vision_info(messages)
-        print(f"Processed image inputs shape: {image_inputs[0].size}")
+        #print(f"Processed image inputs shape: {image_inputs[0].size}")
         if len(image_inputs) > 1:
             breakpoint()
         inputs = self.processor(
