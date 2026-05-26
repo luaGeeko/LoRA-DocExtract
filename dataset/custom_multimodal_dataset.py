@@ -1,3 +1,4 @@
+import torch
 import pandas as pd
 from PIL import Image
 from typing import Optional
@@ -83,6 +84,15 @@ class SROIEMultimodalDataset(Dataset):
         # mask the prompt tokens with -100 so that they are ignored in the loss calculation, only the generation part (the label part) will contribute to the loss
         labels[:prompt_token_len] = -100 
         inputs["labels"] = labels
-        
+
+        #FIX: processor if skips creating mm_token_type_ids, we need to create it ourselves for the multimodal part of the input, which is used in some models to differentiate between text and vision tokens
+        if "mm_token_type_ids" not in inputs:
+            # 151655 is the standard token ID Qwen2-VL uses to denote vision tokens
+            image_token_id = 151655 
+            # tensor of zeros matching the shape of input_ids
+            mm_token_type_ids = torch.zeros_like(inputs["input_ids"])
+            # set positions to 1 wherever there is an image patch token
+            mm_token_type_ids[inputs["input_ids"] == image_token_id] = 1
+            inputs["mm_token_type_ids"] = mm_token_type_ids
         return inputs
     
