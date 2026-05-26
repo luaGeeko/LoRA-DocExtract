@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import kagglehub
 import random
+import os
 from PIL import Image
 from pathlib import Path
 from typing import Optional, List, Union
@@ -92,7 +93,8 @@ class SROIEDataset:
             rng = random.Random(self.seed)
             rng.shuffle(sorted_img_files)
         #NOTE: create resized image dir, these images directory is just for training, if you want to inspect orginal iamges with boxes, this will be taken from original img path, not resized path
-        resized_dir = full_path / "img_resized"
+        workspace_root = os.getcwd()
+        resized_dir = Path(workspace_root) / "data_resized" / split
         rows = []
         for img in sorted_img_files:
             original_img_path = full_path / "img" / f"{img}.jpg"
@@ -117,3 +119,6 @@ class SROIEDataset:
         # load the dataset from each split in the manifest and then format in pandas format
         for split in self.manifest:
             setattr(self, split, self._load_split(split=split))
+
+
+data = SROIEDataset(resize_offline=True)
