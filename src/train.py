@@ -94,6 +94,8 @@ def train_model(cfg: DictConfig):
         warmup_ratio=cfg.training.warmup_ratio,
 
         # logging and evaluation
+        per_device_eval_batch_size=1,
+        eval_accumulation_steps=1,
         logging_steps=cfg.training.logging_steps,
         eval_strategy="steps",
         eval_steps=cfg.training.eval_steps,
