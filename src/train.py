@@ -95,7 +95,7 @@ def train_model(cfg: DictConfig):
 
         # logging and evaluation
         logging_steps=cfg.training.logging_steps,
-        evaluation_strategy="steps",
+        eval_strategy="steps",
         eval_steps=cfg.training.eval_steps,
         save_strategy="steps",
         save_steps=cfg.training.eval_steps,
