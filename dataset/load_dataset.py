@@ -119,6 +119,3 @@ class SROIEDataset:
         # load the dataset from each split in the manifest and then format in pandas format
         for split in self.manifest:
             setattr(self, split, self._load_split(split=split))
-
-
-data = SROIEDataset(resize_offline=True)

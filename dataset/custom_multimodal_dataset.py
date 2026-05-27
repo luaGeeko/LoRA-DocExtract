@@ -6,9 +6,6 @@ from torch.utils.data import Dataset
 from src.utils.logger import setup_logger
 from qwen_vl_utils import process_vision_info
 
-from dataset.load_dataset import SROIEDataset
-from src.vlm_model import load_processor
-
 
 class SROIEMultimodalDataset(Dataset):
     def __init__(self, data_frame: pd.DataFrame, split: str, debug: Optional[bool] = False, max_edge: Optional[int]=1024, max_seq_length: Optional[int] = 1024, processor=None):

@@ -13,3 +13,4 @@ bitsandbytes
 hydra-core
 omegaconf
 peft
+wandb
